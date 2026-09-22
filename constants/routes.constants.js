@@ -13,6 +13,7 @@ export const authRoutesConstants = {
   VERIFY_OTP: "/verify-otp",
   SIGNUP_GOOGLE: "/googleSignin",
   OAUTH_CALLBACK: "/oauth/callback",
+  REFRESH_TOKEN: "/refresh",
 };
 
 export const gmailRoutesConstants = {

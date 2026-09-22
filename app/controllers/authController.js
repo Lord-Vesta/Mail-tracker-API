@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import {
   createUserService,
   findUserByEmailService,
+  getUserByIdService,
 } from "../services/user.services.js";
 import utils from "../../common/utils.js";
 import { authMessages } from "../messages/auth.messages.js";
@@ -14,7 +15,8 @@ import { google } from "googleapis";
 import { getGmailAccountByEmailAndUserIdService } from "../services/gmail.services.js";
 const { USERPRESENT, LOGINFAILURE, UNAUTHORIZED } = authMessages;
 
-const { hashPassword, generateJwtToken, verifyPassword } = utils;
+const { hashPassword, generateJwtToken, verifyPassword, generateRefreshToken } =
+  utils;
 dotenv.config();
 const oauth2Client = new google.auth.OAuth2(
   process.env.CLIENT_ID,
@@ -54,7 +56,7 @@ export const googleAuthCallback = async (req, res) => {
 
     const { email, name, id: googleId } = data;
 
-    let user = await findUserByEmailService(email);
+    let user = await findUserByEmailService(googleId);
 
     if (!user) {
       user = await createUserService({
@@ -72,7 +74,16 @@ export const googleAuthCallback = async (req, res) => {
       name: user.name,
     });
 
-    res.redirect(`${process.env.FRONTEND_URL}/oauth-success?token=${token}`);
+    const refreshToken = await generateRefreshToken({
+      id: user.id,
+    });
+
+    // Redirect to frontend
+    res.redirect(
+      `${process.env.FRONTEND_URL}/oauth-success` +
+        `?token=${token}` +
+        `&refreshToken=${refreshToken}`,
+    );
   } catch (error) {
     logError(`Google auth error: ${error.message}`);
     res.status(500).send("Google login failed");
@@ -155,5 +166,33 @@ export const verifyOtp = async (email, otp) => {
   } catch (error) {
     await logError(`OTP verification failed for ${email}: ${error.message}`);
     throw error;
+  }
+};
+
+export const refreshAccessTokenController = async (refreshToken) => {
+  try {
+    if (!refreshToken) {
+      throw new Error("Refresh token is required");
+    }
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+
+    const user = await getUserByIdService(decoded.id);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const newAccessToken = await generateJwtToken({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+    });
+
+    return newAccessToken;
+  } catch (error) {
+    console.error("Refresh token error:", error);
+
+    throw new Error("Invalid refresh token");
   }
 };

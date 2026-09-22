@@ -6,14 +6,22 @@ import {
   verifyOtp,
   signupWithGoogle,
   googleAuthCallback,
+  refreshAccessTokenController,
 } from "../controllers/authController.js";
 import { authRoutesConstants } from "../../constants/routes.constants.js";
 import { responseHandler } from "../../common/messageHandlers.js";
 import { logInfo } from "../services/logs.services.js";
 
 const authRouter = express.Router();
-const { SIGNUP, LOGIN, SEND_OTP, VERIFY_OTP, SIGNUP_GOOGLE, OAUTH_CALLBACK } =
-  authRoutesConstants;
+const {
+  SIGNUP,
+  LOGIN,
+  SEND_OTP,
+  VERIFY_OTP,
+  SIGNUP_GOOGLE,
+  OAUTH_CALLBACK,
+  REFRESH_TOKEN,
+} = authRoutesConstants;
 authRouter.post(SIGNUP, async (req, res, next) => {
   try {
     const { name, email, password } = req?.body;
@@ -58,4 +66,15 @@ authRouter.post(VERIFY_OTP, async (req, res, next) => {
 
 authRouter.get(SIGNUP_GOOGLE, signupWithGoogle);
 authRouter.get(OAUTH_CALLBACK, googleAuthCallback);
+
+authRouter.post(REFRESH_TOKEN, async (req, res, next) => {
+  try {
+    const { refreshToken } = req?.body;
+    const newAccessToken = await refreshAccessTokenController(refreshToken);
+    res.status(200).json(new responseHandler(newAccessToken));
+  } catch (error) {
+    next(error);
+  }
+});
+
 export default authRouter;

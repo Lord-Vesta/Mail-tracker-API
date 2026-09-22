@@ -30,7 +30,12 @@ const verifyPassword = async (password, hashedPassword) => {
 };
 
 const generateJwtToken = async (data) => {
-  const options = { expiresIn: "1h" };
+  const options = { expiresIn: "60s" };
+  return jsonwebtoken.sign(data, secretKey, options);
+};
+
+const generateRefreshToken = async (data) => {
+  const options = { expiresIn: "7d" };
   return jsonwebtoken.sign(data, secretKey, options);
 };
 
@@ -471,6 +476,7 @@ export default {
   verifyPassword,
   generateJwtToken,
   verifyToken,
+  generateRefreshToken,
   imageUpload,
   uploadFilesToCloudinary,
   downloadFileFromUrl,

@@ -11,9 +11,9 @@ export const createUserService = async (user) => {
   }
 };
 
-export const findUserByEmailService = async (email) => {
+export const findUserByEmailService = async (googleId) => {
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ googleId });
     return user;
   } catch (error) {
     console.error(error);
