@@ -36,7 +36,16 @@ routes.forEach(({ path, route }) => {
 });
 
 app.use((error, req, res, next) => {
-  res.status(error.statusCode || 500).json(error || "Something went wrong");
+  console.error("Global error:", error);
+
+  if (res.headersSent) {
+    return next(error);
+  }
+
+  return res.status(error.statusCode || 500).json({
+    success: false,
+    message: error.message || "Something went wrong",
+  });
 });
 
 export default app;
